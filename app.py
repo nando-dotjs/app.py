@@ -1,20 +1,25 @@
 import streamlit as st
-import pyodbc
+import pymssql
 
-st.title("Consultar Espacio SQL Server")
+st.title("🗄️ Consultor de Espacio SQL Server")
 
 with st.form("connection_form"):
-    server = st.text_input("Instancia")
+    server = st.text_input("Servidor / Instancia (Ej: tu_servidor o ip:puerto)")
     database = st.text_input("Base de Datos")
     user = st.text_input("Usuario")
     password = st.text_input("Contraseña", type="password")
     
-    submitted = st.form_submit_button("Consultar")
+    submitted = st.form_submit_button("Consultar Espacio")
 
 if submitted:
-    conn_str = f"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER={server};DATABASE={database};UID={user};PWD={password};Encrypt=no;TrustServerCertificate=yes;"
     try:
-        conn = pyodbc.connect(conn_str)
+        # Conexión limpia con pymssql (no requiere ODBC)
+        conn = pymssql.connect(
+            server=server,
+            user=user,
+            password=password,
+            database=database
+        )
         cursor = conn.cursor()
         
         query = """
@@ -31,6 +36,7 @@ if submitted:
         st.success("¡Conexión exitosa!")
         
         for row in rows:
+            # row[0]: Archivo, row[1]: Tamaño, row[2]: Usado, row[3]: Libre
             st.subheader(f"Archivo: {row[0]}")
             col1, col2, col3 = st.columns(3)
             col1.metric("Tamaño Total", f"{row[1]:.2f} MB")
